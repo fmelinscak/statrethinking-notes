@@ -53,4 +53,46 @@ MSE2 <- sum((p_grid - 0.7) * posterior2)
 cat(sprintf("MSE1: %g\nMSE2: %g", MSE1, MSE2))
 ```
 
+**H1P3.**
+```{r problem-H1P3, message=FALSE}
+library(rethinking)
 
+# Simulation settings
+n_sim_exp <- 128
+candidate_n_samp <- c(16, 32, 64, 128, 256, 512, 1024, 2048, 4096)
+candidate_n_samp <- rep(candidate_n_samp , each=n_sim_exp)
+
+# Model specification
+mdl <- alist(
+        W ~ dbinom(N, p), # binomial likelihood
+        p ~ dunif(0, 1) # uniform prior
+)
+
+# Setup function to calculate 99% CI
+eval_n_samp <- function(n_samp) {
+  # Simulate data
+  p_true <- 0.7
+  W <- rbinom(1, size=n_samp, prob=p_true)
+  
+  # Fit model using quadratic approximation
+  mdl_fit <- rethinking::quap(mdl,
+                              data=list(W=W, N=n_samp),
+                              start=list(p=0.5)) # When the starting point is not set, fitting can fail
+  
+  # Calculate width of 99% CI
+  mdl_stats <- summary(mdl_fit)
+  posterior_sd <- mdl_stats[["p","sd"]]
+  ci_width <- 2*qnorm(0.995)*posterior_sd
+  return(ci_width)
+}
+
+# Perform simulations
+ci_widths <- sapply(candidate_n_samp, eval_n_samp)
+
+# Plot results
+plot(candidate_n_samp, ci_widths)
+abline( h=0.05 , col="red" )
+
+```
+
+From the plot, it is visible more than 2000 and less than 4000 samples would need to be obtained, to expect the 99% CI width to be below 0.05 (a more precise sample size could be found using a formal search method, instead of a fixed set of values).
