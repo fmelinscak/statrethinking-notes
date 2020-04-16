@@ -1,0 +1,172 @@
+---
+title: "Chapter 02 - Practice problems"
+output:
+  html_document:
+    df_print: paged
+---
+
+**2E1**.
+
+**2** and **4** because:
+$$ \frac{Pr(rain, Monday)}{Pr(Monday)} =  \frac{Pr(rain|Monday)Pr(Monday)}{Pr(Monday)} = Pr(rain|Monday)$$
+
+
+**2E2**.
+
+$Pr(Monday|rain)$ corresponds to statement **3** 'The probability that it is monday, given that it is raining.'
+
+
+**2E3**.
+
+The statement 'the probability that it is Monday, given that it is raining?' corresponds to expression **1** $Pr(Monday|rain)$ and expression **4** $Pr(rain|Monday) Pr(Monday)/ Pr(rain)$ because:
+$$\frac{Pr(rain|Monday) Pr(Monday)}{Pr(rain)} = \frac{P(rain, Monday)}{Pr(rain)} = \frac{Pr(Monday|rain)Pr(rain)}{Pr(rain)} = Pr(Monday|rain)$$
+
+
+**2E4**.
+
+It means that given the current state of knowledge of an observer, the mode of **their** belief (posterior) distribution is at 0.7.
+
+
+**2M1**.
+
+```{r problem-2M1}
+n_grid <- 50
+data1 <- list(W = 3, L = 0)
+data2 <- list(W = 3, L = 1)
+data3 <- list(W = 5, L = 2)
+
+p_grid <- seq(0, 1, length.out = n_grid)
+
+prior <- rep(1, n_grid)
+
+posterior1_unstd <- dbinom(data1$W, data1$W + data1$L, p_grid) * prior
+posterior1 <- posterior1_unstd / sum(posterior1_unstd)
+
+plot(p_grid, posterior1, type = "b",
+     xlab = "probability of water", ylab="posterior probability")
+mtext("Posterior 1")
+
+posterior2_unstd <- dbinom(data2$W, data2$W + data2$L, p_grid) * prior
+posterior2 <- posterior2_unstd / sum(posterior2_unstd)
+
+plot(p_grid, posterior2, type = "b",
+     xlab = "probability of water", ylab="posterior probability")
+mtext("Posterior 2")
+
+posterior3_unstd <- dbinom(data3$W, data3$W + data3$L, p_grid) * prior
+posterior3 <- posterior3_unstd / sum(posterior3_unstd)
+
+plot(p_grid, posterior3, type = "b",
+     xlab = "probability of water", ylab="posterior probability")
+mtext("Posterior 3")
+```
+
+
+**2M2.**
+
+```{r problem-2M2}
+n_grid <- 50
+data1 <- list(W = 3, L = 0)
+data2 <- list(W = 3, L = 1)
+data3 <- list(W = 5, L = 2)
+
+p_grid <- seq(0, 1, length.out = n_grid)
+
+prior_constr <- ifelse(p_grid < 0.5 , 0, 1)
+
+posterior1_unstd <- dbinom(data1$W, data1$W + data1$L, p_grid) * prior_constr
+posterior1 <- posterior1_unstd / sum(posterior1_unstd)
+
+plot(p_grid, posterior1, type = "b",
+     xlab = "probability of water", ylab="posterior probability")
+mtext("Posterior 1")
+
+posterior2_unstd <- dbinom(data2$W, data2$W + data2$L, p_grid) * prior_constr
+posterior2 <- posterior2_unstd / sum(posterior2_unstd)
+
+plot(p_grid, posterior2, type = "b",
+     xlab = "probability of water", ylab="posterior probability")
+mtext("Posterior 2")
+
+posterior3_unstd <- dbinom(data3$W, data3$W + data3$L, p_grid) * prior_constr
+posterior3 <- posterior3_unstd / sum(posterior3_unstd)
+
+plot(p_grid, posterior3, type = "b",
+     xlab = "probability of water", ylab="posterior probability")
+mtext("Posterior 3")
+```
+
+
+**2H1**
+Given information:
+$$
+P(A) = P(B) = 0.5 \\
+P(T|A) = 0.1 \\
+P(S|A) = 1 - P(T|A) = 0.9 \\
+P(T|B) = 0.2 \\
+P(S|B) = 1 - P(T|B) = 0.8
+$$
+
+Information required:
+$$
+P(T_2|T_1) = ?
+$$
+
+We can "extend the conversation" (opposite of marginalization) to include the intervening variable of species:
+$$
+P(T_2|T_1) = P(T_2|T_1,A)P(A|T_1) + P(T_2|T_1, B)P(B|T_1)
+$$
+We will additionally assume that the births are conditionally independent (i.e., when we know the species, the fact that the first birth was a twin, gives us no additional information):
+$$
+\begin{aligned}
+P(T_2|T_1) &= P(T_2|A)P(A|T_1) + P(T_2|B)P(B|T_1) \\
+&= 0.1 \times P(A|T_1) + 0.2 \times P(B|T_1) \\
+\end{aligned}
+$$
+
+Now using the Bayes' theorem:  
+$$
+\begin{aligned}
+P(A|T_1) &= \frac{P(T_1|A)P(A)}{P(T_1|A)P(A) + P(T_1|B)P(B)} = 1/3  \\
+P(B|T_1) &= 1 - P(A|T_1) = 2/3
+\end{aligned}
+$$
+Finally, we obtain:
+$$
+\begin{aligned}
+P(T_2|T_1) &= P(T_2|A)P(A|T_1) + P(T_2|B)P(B|T_1) \\
+&= 0.1 \times 1/3 + 0.2 \times 2/3 \\
+&= 1/6
+\end{aligned}
+$$
+
+
+**2H2.**
+Information required:
+$$
+P(A|T_1) = ?
+$$
+We can use Bayes' theorem as in H1:
+$$
+P(A|T_1) = \frac{P(T_1|A)P(A)}{P(T_1|A)P(A) + P(T_1|B)P(B)} = 1/3
+$$
+
+
+**2H3.**
+Information required:
+$$
+P(A|T_1,S_2) = ?
+$$
+Using Bayes' theorem
+$$
+P(A|T_1,S_2) = \frac{P(T_1,S_2|A)P(A)}{P(T_1, S_2)}
+$$
+Due to independence of births (conditional on species), we have:
+$$
+\begin{aligned}
+P(T_1, S_2 | A) &= P(T_1|A)P(S_2|A) = 0.1 \times 0.9 = 0.09 \\
+P(T_1, S_2 | B) &= p(T_1|B)P(S_2|B) = 0.2 \times 0.8 = 0.16 \\
+p(T_1, S_2) &= P(T_1, S_2 | A)P(A) + P(T_1, S_2 | B)P(B) = 0.125 \\
+P(A|T_1, S_2) &= \frac{0.09 \times 0.5}{0.125} = 0.36
+\end{aligned}
+$$
