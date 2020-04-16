@@ -1,0 +1,56 @@
+---
+title: "Chapter 02 - Homework"
+output:
+  html_document:
+    df_print: paged
+---
+
+**H1P1.**
+
+```{r problem-H1P1}
+# Data and parameter grid
+data <- list(W = 8, N = 15)
+n_grid <- 50
+p_grid <- seq(0, 1, length.out = n_grid)
+
+# Posterior with uniform prior
+prior <- rep(1, n_grid)
+posterior_unstd <- dbinom(data$W, data$N, p_grid) * prior
+posterior <- posterior_unstd / sum(posterior_unstd)
+
+plot(p_grid, posterior, type = "b",
+     xlab = "probability of water", ylab="posterior probability")
+mtext("Posterior")
+
+```
+
+**H1P2**.
+```{r problem-H1P2}
+# Data and parameter grid
+data <- list(W = 8, N = 15)
+n_grid <- 50
+p_grid <- seq(0, 1, length.out = n_grid)
+
+# Posterior with uniform prior
+prior <- rep(1, n_grid)
+posterior1_unstd <- dbinom(data$W, data$N, p_grid) * prior
+posterior1 <- posterior1_unstd / sum(posterior1_unstd)
+
+# Posterior with constrained prior
+prior_constr <- ifelse(p_grid < 0.5 , 0, 1)
+posterior2_unstd <- dbinom(data$W, data$N, p_grid) * prior_constr
+posterior2 <- posterior2_unstd / sum(posterior2_unstd)
+
+plot(p_grid, posterior1, type = "l",
+     xlab = "probability of water", ylab="posterior probability", col="red", ylim=c(0, 0.13))
+mtext("Posterior")
+lines(p_grid, posterior2, col="green")
+abline(v=0.7)
+
+# Calculate MSE for both priors w.r.t the true parameter value
+MSE1 <- sum((p_grid - 0.7) * posterior1)
+MSE2 <- sum((p_grid - 0.7) * posterior2)
+cat(sprintf("MSE1: %g\nMSE2: %g", MSE1, MSE2))
+```
+
+
