@@ -1,0 +1,264 @@
+---
+title: "Chapter 03 - Practice problems"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup,message=FALSE}
+library(rethinking)
+```
+
+
+```{r problem-3E-setup}
+# Construct grid-approximated posterior (globe tossing model)
+p_grid <- seq(0, 1, length.out=1000)
+prior <- rep(1, 1000)
+likelihood <- dbinom(6, size=9, prob=p_grid)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+# Get a sample from the grid posterior
+set.seed(100)
+samples <- sample(p_grid, prob=posterior, size=1e4, replace=TRUE)
+
+plot(samples)
+```
+
+**3E1.**
+
+```{r problem-3E1}
+mean(samples < 0.2)
+```
+
+**3E2.**
+```{r problem-3E2}
+mean(samples > 0.8)
+```
+
+**3E3.**
+```{r problem-3E3}
+mean(samples > 0.2 & samples < 0.8)
+```
+
+**3E4.**
+```{r problem-3E4}
+quantile(samples, 0.2)
+```
+
+**3E5.**
+```{r problem-3E5}
+quantile(samples, 0.8)
+```
+
+**3E6.**
+```{r problem-3E6}
+rethinking::HPDI(samples, prob=0.66)
+```
+
+**3E7.**
+```{r problem-3E7}
+rethinking::PI(samples, 0.66)
+# or
+quantile(samples, probs=c((1-0.66)/2, 1 - (1-0.66)/2))
+```
+
+Comparing CI intervals:
+```{r}
+interval1 <- HPDI( samples , prob=0.66 )
+interval2 <- PI( samples , prob=0.66 )
+width1 <- interval1[2] - interval1[1]
+width2 <- interval2[2] - interval2[1]
+cbind(width1,width2)
+```
+
+**3M1.**
+```{r problem-3M1}
+# Construct grid-approximated posterior (globe tossing model with different data)
+p_grid <- seq(0, 1, length.out=1000)
+prior <- rep(1, 1000)
+likelihood <- dbinom(8, size=15, prob=p_grid)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+```
+
+**3M2.**
+```{r problem-3M2}
+# Get a sample from the grid posterior
+set.seed(100)
+samples <- sample(p_grid, prob=posterior, size=1e4, replace=TRUE)
+
+# Calculate 90% HPDI for p
+HPDI(samples, 0.9)
+```
+
+**3M3.**
+```{r problem-3M3}
+w_samples <- rbinom(1e4, size=15, prob=samples)
+mean(w_samples == 8)
+
+simplehist(w_samples)
+```
+
+**3M4.**
+```{r problem-3M4}
+w_sample <- rbinom(1e4, size=9, prob=samples)
+mean(w_sample == 6)
+```
+
+**3M5.**
+```{r problem-3M5}
+# Calculate the mean squared error of the old posterior sample
+error_old <- mean((samples-0.7)^2) 
+
+# Redo 3M1 with more informative prior (prop_w > 0.5)
+p_grid <- seq(0, 1, length.out=1000)
+prior <- as.numeric(p_grid > 0.5)
+likelihood <- dbinom(8, size=15, prob=p_grid)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+# Get a sample from the grid posterior
+set.seed(100)
+samples <- sample(p_grid, prob=posterior, size=1e4, replace=TRUE)
+
+# Calculate 90% HPDI for p
+HPDI(samples, 0.9)
+
+# Calculate posterior predictive probability of 8/15 water observations
+w_samples <- rbinom(1e4, size=15, prob=samples)
+mean(w_samples == 8)
+
+simplehist(w_samples)
+
+# Calculate posterior predictive probability of 6/9 water observations
+w_sample <- rbinom(1e4, size=9, prob=samples)
+mean(w_sample == 6)
+
+# Compare errors of two posteriors
+error_new <- mean((samples-0.7)^2)
+
+cat(sprintf("MSE old: %g\nMSE new: %g", error_old, error_new))
+```
+
+**3M6.**
+```{r problem-3M6}
+# Simulation settings
+n_sim_exp <- 128
+candidate_n_samp <- c(32, 64, 128, 256, 512, 1024, 2048, 4096)
+candidate_n_samp <- rep(candidate_n_samp , each=n_sim_exp)
+
+# Set up grid approximation
+p_grid <- seq(0, 1, length.out=1000)
+grid_posterior <- function(w, n) {
+  prior <- rep(1, length.out=1000)
+  likelihood <- dbinom(w, size=n, p_grid)
+  posterior <- likelihood * prior
+  posterior <- posterior / sum(posterior)
+  return(posterior)
+}
+
+# Setup function to calculate 99% CI
+eval_n_samp <- function(n_samp) {
+  # Simulate data
+  p_true <- 0.7
+  W <- rbinom(1, size=n_samp, prob=p_true)
+
+  # Calculate posterior using grid approximation
+  posterior <- grid_posterior(W, n_samp)
+  
+  # Sample from posterior
+  samples <- sample(p_grid, 1e4, replace=TRUE, prob=posterior)
+  
+  # Calculate width of 99% percentile interval
+  pi99 <- PI(samples, prob=0.99)
+  ci_width <- as.numeric(pi99[2] - pi99[1])
+  return(ci_width)
+}
+
+# Perform simulations
+ci_widths <- sapply(candidate_n_samp, eval_n_samp)
+
+# Plot results
+plot(candidate_n_samp, ci_widths)
+abline( h=0.05 , col="red" )
+```
+
+
+**3H1.**
+```{r problem-3H1}
+birth1 <- c(1,0,0,0,1,1,0,1,0,1,0,0,1,1,0,1,1,0,0,0,1,0,0,0,1,0,
+0,0,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,0,1,0,0,1,1,0,1,0,0,0,0,0,0,0,
+1,1,0,1,0,0,1,0,0,0,1,0,0,1,1,1,1,0,1,0,1,1,1,1,1,0,0,1,0,1,1,0,
+1,0,1,1,1,0,1,1,1,1)
+
+birth2 <- c(0,1,0,1,0,1,1,1,0,0,1,1,1,1,1,0,0,1,1,1,0,0,1,1,1,0,
+1,1,1,0,1,1,1,0,1,0,0,1,1,1,1,0,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,0,1,1,0,1,1,0,1,1,1,0,0,0,0,0,0,1,0,0,0,1,1,0,0,1,0,0,1,1,
+0,0,0,1,1,1,0,0,0,0)
+
+n_boy <- sum(birth1) + sum(birth2)
+n_birth <- length(birth1) + length(birth2)
+
+# Computing posterior using grid approximation with unif prior
+p_grid <- seq(0, 1, length.out = 1000)
+prior <- rep(1, length.out = 1000)
+likelihood <- dbinom(n_boy, size = n_birth, prob = p_grid)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+# Plot the posterior
+plot(posterior ~ p_grid, type="l")
+abline(v=0.5, lty=2 )
+
+# Determine MAP
+map_p <- p_grid[which.max(posterior)]
+cat(sprintf('MAP is: %g', map_p))
+```
+
+**3H2.**
+```{r problem-3H2}
+posterior_samples <- sample(p_grid, 1e4, prob = posterior, replace = TRUE)
+
+HPDI(posterior_samples, c(0.50, 0.89, 0.97))
+```
+
+**3H3.**
+```{r problem-3H3}
+# Simulate number of boys in 200 births (disregarding birth pairs)
+sim_n_boys <- rbinom(10000, size = 200, prob = posterior_samples)
+
+# Posterior predictive check
+simplehist(sim_n_boys)
+abline(v = n_boy, col = "red")
+```
+
+**3H4.**
+```{r problem-3H4}
+# Simulate only first 100 births
+sim_n_boys_first <- rbinom(10000, 100, prob = posterior_samples)
+
+# Posterior predictive check
+simplehist(sim_n_boys_first)
+abline(v = sum(birth1), col = "red")
+
+```
+
+**3H5.**
+```{r problem-3H5}
+# Crosstabulate number of cases (00, 01, 10, 11)
+birth_crosstab <- table(list(birth1, birth2))
+
+# Determine number of first-born girls
+n_girl_first <- sum(birth_crosstab["0",])
+n_girl_boy <- birth_crosstab["0", "1"]
+
+# In each replication, simulate as many births as first-born girl births in observed data
+sim_n_boys <- rbinom(10000, size = n_girl_first, prob = posterior_samples)
+
+# Posterior predictive check
+simplehist(sim_n_boys)
+abline(v = n_girl_boy, col = "red")
+```
+
+The model predicts much fewer boys born after girls than is actually observed in data, because the model assumes births are independent, whereas the data seems to contradict this assumption.
