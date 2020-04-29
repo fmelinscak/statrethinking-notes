@@ -1,0 +1,51 @@
+---
+title: "Chapter 04 - Practice problems"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup,message=FALSE}
+library(rethinking)
+```
+
+
+**4E1.**
+Line 1 is the likelihood.
+
+**4E2.**
+There are 2 parameters in the posterior: $\mu$ and $\sigma$.
+
+**4E3.**
+$$
+p(\mu, \sigma | y) = \frac{\mathrm{Normal}(y | \mu, \sigma)\mathrm{Normal}(\mu )\mathrm{Exponential}(\sigma)}{\int \mathrm{Normal}(y | \mu, \sigma)\mathrm{Normal}(\mu )\mathrm{Exponential}(\sigma) d\mu d\sigma}
+$$
+
+**4M1.**
+
+```{r problem-4M1}
+# Sample observed variable y from the prior (by sampling parameters first)
+mu_samples <- rnorm(1e4, 0, 10)
+sigma_samples <- rexp(1e4, 1)
+y_samples <- rnorm(1e4, mean = mu_samples, sd = sigma_samples)
+
+# Sample observed variable y from the mean of the prior [optional, just for comparison]
+y_samples_prior_mean <- rnorm(1e4, mean = 0, sd = 1)
+
+# Compare the y samples from the prior, with y samples from the mean of the prior
+dens(y_samples)
+dens(y_samples_prior_mean)
+```
+
+Notice that the samples from the mean of the prior are much less dispersed, because the uncertainty of the mean and SD are not taken into account.
+
+
+**4M2.**
+```{r problem-4M2}
+mdl <- alist(
+  y ~ dnorm(mu, sigma),
+  mu ~ dnorm(0, 10),
+  sigma ~ dexp(1)
+)
+```
+
